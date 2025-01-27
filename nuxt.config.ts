@@ -15,4 +15,12 @@ export default defineNuxtConfig({
     strategy: 'prefix_and_default',
     defaultLocale: 'en',
   },
+  content: {
+    preview: {
+      api: 'https://api.nuxt.studio',
+    },
+    renderer: {
+      anchorLinks: false
+    },
+  },
 })
