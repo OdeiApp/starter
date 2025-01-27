@@ -1,0 +1,61 @@
+name: Deploy
+
+on:
+  push:
+    branches:
+      - main
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: template-spa
+  TAG: ${{ github.ref_name == 'main' && 'latest' || github.ref_name }}
+
+jobs:
+  publish:
+    name: build and publish
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v4
+
+      - name: Log in to the Container registry
+        uses: docker/login-action@65b78e6e13532edd9afa3aa52ac7964289d1a9c1
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - id: lower-repo
+        name: Repository to lowercase
+        run: |
+          echo "repository=${GITHUB_REPOSITORY@L}" >> $GITHUB_OUTPUT
+
+      - name: Build and push
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ${{ env.REGISTRY }}/${{ steps.lower-repo.outputs.repository }}:${{ env.TAG }}
+
+  deploy:
+    needs: publish
+    name: deploy
+    runs-on: ubuntu-latest
+    steps:
+      - id: lower-repo
+        name: Repository to lowercase
+        run: |
+          echo "repository=${GITHUB_REPOSITORY@L}" >> $GITHUB_OUTPUT
+      - name: connect and run
+        run: |
+          sshpass -p ${{ secrets.SSH_PASSWORD }} ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} -p ${{ secrets.SSH_PORT }} "
+          echo ${{ secrets.GITHUB_TOKEN }} | docker login ${{ env.REGISTRY }} -u ${{ github.actor }} --password-stdin &&
+          docker pull ${{ env.REGISTRY }}/${{ steps.lower-repo.outputs.repository }}:${{ env.TAG }}                   &&
+          docker stop ${{ env.IMAGE_NAME }}  || true &&
+          docker rm ${{ env.IMAGE_NAME }}  || true &&
+          docker run         \
+            -d               \
+            --name ${{ env.IMAGE_NAME }}                                  \
+            -p 4247:80        \
+            ${{ env.REGISTRY }}/${{ steps.lower-repo.outputs.repository }}:${{ env.TAG }} &&
+          exit"
