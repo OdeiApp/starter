@@ -1,9 +1,5 @@
 <script setup>
-import {useSwitchLocalePath} from "#i18n";
-
 const { setLocale, locales, locale } = useI18n()
-prerenderRoutes(['/', '/en', '/fr', '/fa']);
-const switchLocalePath = useSwitchLocalePath()
 </script>
 
 <template>
@@ -14,7 +10,7 @@ const switchLocalePath = useSwitchLocalePath()
             v-for="_locale of locales"
             :key="_locale.code"
             class="px-4"
-            @click="setLocale(_locale.code);switchLocalePath(_locale.code)"
+            @click="setLocale(_locale.code);"
         >
           {{ _locale.code }}
         </button>

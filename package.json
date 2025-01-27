@@ -10,7 +10,7 @@
   },
   "dependencies": {
     "@nuxt/content": "3.0.1",
-    "@nuxtjs/i18n": "latest",
+    "@nuxtjs/i18n": "8.5.6",
     "nuxt": "^3.15.3"
   }
 }
